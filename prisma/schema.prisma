@@ -1,0 +1,79 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Legacy database table for processed articles
+model NewsItem {
+  id            Int      @id @default(autoincrement())
+  title         String
+  url           String
+  scraped_at    String?
+  row_text      String?
+  actual_datetime String
+  content       String?
+  clean_content String?
+  content_length Int?
+  date_time     String?
+  hash_id       String?
+  created_at    DateTime @default(now())
+  isProcessed   Int      @default(0) // 0=unprocessed, 1=processed, 2=not relevant
+  process_data  String?  // JSON string with AI analysis
+  
+  @@map("news_items")
+}
+
+model NewsEvent {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  source      String   // "rotter.net" or other sources
+  url         String?
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  newsArticles NewsArticle[]
+  summary      BalancedSummary?
+  
+  @@index([publishedAt])
+  @@index([source])
+}
+
+model NewsArticle {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  url         String
+  source      String   // "ynet.co.il", "haaretz.co.il", etc.
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  eventId     String
+  event       NewsEvent @relation(fields: [eventId], references: [id])
+  
+  @@index([source])
+  @@index([eventId])
+}
+
+model BalancedSummary {
+  id          String   @id @default(cuid())
+  summary     String
+  viewpoints  String   // JSON string of different viewpoints
+  biasScore   Float    // -10 to +10 scale
+  confidence  Float    // 0 to 1 scale
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  eventId     String   @unique
+  event       NewsEvent @relation(fields: [eventId], references: [id])
+}
