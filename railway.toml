@@ -1,7 +1,13 @@
 [build]
 builder = "RAILPACK"
+watchPatterns = ["**/*"]
 
 [deploy]
-startCommand = "npm start"
+startCommand = "npm run railway:start"
 healthcheckPath = "/"
 healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+
+[env]
+NODE_ENV = "production"
+RAILWAY_LOG_LEVEL = "debug"
