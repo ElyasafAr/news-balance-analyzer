@@ -4,7 +4,7 @@ watchPatterns = ["**/*"]
 
 [deploy]
 startCommand = "npm run railway:start"
-healthcheckPath = "/"
+healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 port = 8080
@@ -13,3 +13,4 @@ port = 8080
 NODE_ENV = "production"
 RAILWAY_LOG_LEVEL = "debug"
 PORT = "8080"
+HOSTNAME = "0.0.0.0"
