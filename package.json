@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start -H 0.0.0.0 -p 8080",
+    "start": "next start",
+    "start:all": "HOSTNAME=0.0.0.0 PORT=8080 next start -H 0.0.0.0 -p 8080",
     "lint": "next lint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -15,7 +16,7 @@
     "python:filter": "python filter_recent.py",
     "python:process": "python process_articles.py",
     "railway:build": "echo '=== BUILD START ===' && echo 'Current directory: $(pwd)' && echo 'Directory contents:' && ls -la && echo '=== NPM INSTALL ===' && npm install && echo '=== PRISMA GENERATE ===' && npx prisma generate && echo '=== NEXT BUILD ===' && npm run build && echo '=== BUILD COMPLETE ===' && echo 'Final directory contents:' && ls -la",
-    "railway:start": "echo '=== STARTING APP ===' && echo 'Current directory: $(pwd)' && echo 'Environment variables:' && env | grep -E '(PORT|NODE_ENV|RAILWAY|HOSTNAME)' && echo '=== STARTING NEXT.JS ===' && npm start"
+    "railway:start": "echo '=== STARTING APP ===' && echo 'Current directory: $(pwd)' && echo 'Environment variables:' && env | grep -E '(PORT|NODE_ENV|RAILWAY|HOSTNAME)' && echo '=== STARTING NEXT.JS ===' && npm run start:all"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
