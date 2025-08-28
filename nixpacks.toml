@@ -13,7 +13,7 @@ nixPkgs = [
 
 [phases.install]
 cmds = [
-  "npm install"
+  "npm install --production=false"
 ]
 
 [phases.build]
@@ -24,3 +24,6 @@ cmds = [
 
 [start]
 cmd = "npm start"
+
+[variables]
+NODE_ENV = "production"
