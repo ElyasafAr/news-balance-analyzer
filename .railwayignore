@@ -38,9 +38,3 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
-
-# Docker files (force nixpacks)
-Dockerfile
-.dockerignore
-docker-compose.yml
-docker-compose.yaml

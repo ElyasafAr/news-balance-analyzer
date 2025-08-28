@@ -1,12 +1,5 @@
 [build]
 builder = "nixpacks"
-watchPatterns = ["**/*"]
 
 [deploy]
 startCommand = "npm start"
-healthcheckPath = "/"
-healthcheckTimeout = 300
-restartPolicyType = "on_failure"
-
-[env]
-NODE_ENV = "production"

@@ -1,29 +1,11 @@
 [phases.setup]
-nixPkgs = [
-  "nodejs", 
-  "python3", 
-  "python3Packages.requests",
-  "python3Packages.beautifulsoup4",
-  "python3Packages.lxml",
-  "python3Packages.openai",
-  "python3Packages.python-dotenv",
-  "python3Packages.httpx",
-  "python3Packages.anthropic"
-]
+nixPkgs = ["nodejs", "python3"]
 
 [phases.install]
-cmds = [
-  "npm install --production=false"
-]
+cmds = ["npm install"]
 
 [phases.build]
-cmds = [
-  "npx prisma generate",
-  "npm run build"
-]
+cmds = ["npm run build"]
 
 [start]
 cmd = "npm start"
-
-[variables]
-NODE_ENV = "production"
