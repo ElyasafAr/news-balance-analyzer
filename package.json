@@ -1,5 +1,5 @@
 {
-  "name": "news-balance-analyzer",
+  "name": "e",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -14,8 +14,8 @@
     "python:backend": "python backend_runner.py",
     "python:filter": "python filter_recent.py",
     "python:process": "python process_articles.py",
-    "railway:build": "echo '=== BUILD START ===' && npm install && echo '=== PRISMA GENERATE ===' && npx prisma generate && echo '=== NEXT BUILD ===' && npm run build && echo '=== BUILD COMPLETE ==='",
-    "railway:start": "echo '=== STARTING APP ===' && npm start"
+    "railway:build": "echo '=== BUILD START ===' && echo 'Current directory: $(pwd)' && echo 'Directory contents:' && ls -la && echo '=== NPM INSTALL ===' && npm install && echo '=== PRISMA GENERATE ===' && npx prisma generate && echo '=== NEXT BUILD ===' && npm run build && echo '=== BUILD COMPLETE ===' && echo 'Final directory contents:' && ls -la",
+    "railway:start": "echo '=== STARTING APP ===' && echo 'Current directory: $(pwd)' && echo 'Environment variables:' && env | grep -E '(PORT|NODE_ENV|RAILWAY)' && echo '=== STARTING NEXT.JS ===' && npm start"
   },
   "dependencies": {
     "@prisma/client": "^5.10.0",
