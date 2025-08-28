@@ -2,10 +2,26 @@
 nixPkgs = ["nodejs", "python3"]
 
 [phases.install]
-cmds = ["npm install"]
+cmds = [
+  "echo '=== INSTALL PHASE START ==='",
+  "echo 'Current directory:' && pwd",
+  "echo 'Files in directory:' && ls -la",
+  "echo '=== RUNNING DEBUG SCRIPT ==='",
+  "bash railway-debug.sh",
+  "echo 'Installing npm packages...'",
+  "npm install --verbose",
+  "echo '=== INSTALL PHASE COMPLETE ==='"
+]
 
 [phases.build]
-cmds = ["npm run build"]
+cmds = [
+  "echo '=== BUILD PHASE START ==='",
+  "echo 'Generating Prisma client...'",
+  "npx prisma generate",
+  "echo 'Building Next.js app...'",
+  "npm run build",
+  "echo '=== BUILD PHASE COMPLETE ==='"
+]
 
 [start]
 cmd = "npm start"
