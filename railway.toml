@@ -7,7 +7,9 @@ startCommand = "npm run railway:start"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
+port = 8080
 
 [env]
 NODE_ENV = "production"
 RAILWAY_LOG_LEVEL = "debug"
+PORT = "8080"
