@@ -1,0 +1,43 @@
+{
+  "name": "news-balance-analyzer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "postinstall": "prisma generate",
+    "python:backend": "python backend_runner.py",
+    "python:filter": "python filter_recent.py",
+    "python:process": "python process_articles.py",
+    "railway:build": "echo '=== BUILD START ===' && npm install && echo '=== PRISMA GENERATE ===' && npx prisma generate && echo '=== NEXT BUILD ===' && npm run build && echo '=== BUILD COMPLETE ==='",
+    "railway:start": "echo '=== STARTING APP ===' && npm start"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.10.0",
+    "date-fns": "^4.1.0",
+    "next": "15.4.6",
+    "openai": "^4.0.0",
+    "react": "^18",
+    "react-dom": "^18",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/sqlite3": "^5.1.0",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "15.4.6",
+    "postcss": "^8",
+    "prisma": "^5.10.0",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  }
+}
