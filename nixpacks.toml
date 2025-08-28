@@ -1,9 +1,18 @@
 [phases.setup]
-nixPkgs = ["nodejs", "python3", "python3Packages.pip"]
+nixPkgs = [
+  "nodejs", 
+  "python3", 
+  "python3Packages.requests",
+  "python3Packages.beautifulsoup4",
+  "python3Packages.lxml",
+  "python3Packages.openai",
+  "python3Packages.python-dotenv",
+  "python3Packages.httpx",
+  "python3Packages.anthropic"
+]
 
 [phases.install]
 cmds = [
-  "pip install -r requirements.txt",
   "npm install"
 ]
 
