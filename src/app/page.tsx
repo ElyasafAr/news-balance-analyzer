@@ -6,6 +6,11 @@ import NewsAggregator from '@/components/NewsAggregator'
 import NewsFeed from '@/components/NewsFeed'
 
 export default function Home() {
+  console.log('=== HOME PAGE LOADING ===');
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Port:', process.env.PORT);
+  console.log('Timestamp:', new Date().toISOString());
+  
   const [activeTab, setActiveTab] = useState<'analyzer' | 'aggregator' | 'feed'>('feed')
 
   return (

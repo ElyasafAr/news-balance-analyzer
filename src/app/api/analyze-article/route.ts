@@ -5,21 +5,28 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY, // Note: removed NEXT_PUBLIC_ prefix
 })
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
+  console.log('=== API: ANALYZE ARTICLE CALLED ===');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Environment:', process.env.NODE_ENV);
+  console.log('Port:', process.env.PORT);
+  
   try {
-    const { article } = await request.json()
+    const { url, content } = await request.json();
+    console.log('Received URL:', url);
+    console.log('Content length:', content?.length || 0);
     
-    if (!article) {
+    if (!content) {
       return NextResponse.json({ error: 'Article is required' }, { status: 400 })
     }
 
     // Limit article length to prevent token limit issues
     const maxArticleLength = 12000 // characters (increased from 6000)
-    let truncatedArticle = article
+    let truncatedArticle = content
     
-    if (article.length > maxArticleLength) {
-      truncatedArticle = article.substring(0, maxArticleLength) + '... [המאמר קוצר בגלל אורכו]'
-      console.log(`Article truncated from ${article.length} to ${truncatedArticle.length} characters`)
+    if (content.length > maxArticleLength) {
+      truncatedArticle = content.substring(0, maxArticleLength) + '... [המאמר קוצר בגלל אורכו]'
+      console.log(`Article truncated from ${content.length} to ${truncatedArticle.length} characters`)
     }
 
     const prompt = `You are an expert news analyst specializing in media bias detection and balance assessment. Analyze the following news article thoroughly and provide a comprehensive analysis in Hebrew (עברית).
