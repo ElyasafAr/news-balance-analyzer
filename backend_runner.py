@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 class BackendRunner:
     def __init__(self):
         self.running = True
-        self.scraper_interval = 300  # 5 minutes between scraping runs
-        self.processor_interval = 600  # 10 minutes between processing runs
+        self.scraper_interval = 60  # 1 minute between scraping runs
+        self.processor_interval = 60  # 1 minute between processing runs
         self.last_scraper_run = 0
         self.last_processor_run = 0
         self.db_path = "rotter_news.db"
@@ -236,8 +236,8 @@ def main():
     print("News Balance Analyzer - Backend Runner")
     print("=" * 50)
     print("This service will run continuously and:")
-    print("Scrape news every 5 minutes")
-    print("Process articles every 10 minutes")
+    print("Scrape news every 1 minute")
+    print("Process articles every 1 minute")
     print("Provide real-time status updates")
     print("=" * 50)
     
