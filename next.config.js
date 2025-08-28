@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverExternalPackages: ['@prisma/client'],
-  },
   // Force Next.js to listen on all network interfaces
   serverRuntimeConfig: {
     hostname: '0.0.0.0',
@@ -35,6 +32,8 @@ const nextConfig = {
       },
     ];
   },
+  // Prisma external packages
+  serverExternalPackages: ['@prisma/client'],
 }
 
 module.exports = nextConfig
