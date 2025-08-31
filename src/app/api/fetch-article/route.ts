@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 }
 
 // AI-powered content extraction
-async function extractContentWithAI(html: string, url: string): Promise<string> {
+async function extractContentWithAI(html: string, _url: string): Promise<string> {
   try {
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
@@ -136,11 +136,11 @@ ${truncatedHTML}`
 }
 
 // Fallback HTML parsing (simplified version)
-function extractContentWithHTML(html: string, url: string): string {
+function extractContentWithHTML(html: string, _url: string): string {
   console.log('Using fallback HTML parsing...')
   
   // Remove script and style tags
-  let content = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+  const content = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
                     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
                     .replace(/<iframe[^>]*>[\s\S]*?<\/iframe>/gi, '')
 

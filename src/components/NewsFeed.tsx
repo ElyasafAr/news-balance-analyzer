@@ -182,7 +182,7 @@ export default function NewsFeed() {
         
         // Last resort: manual extraction
         try {
-          const result: any = {};
+          const result: Record<string, unknown> = {};
           
           // Extract journalistic_article
           const journalisticMatch = processDataStr.match(/"journalistic_article":\s*"([^"]+)"/);
@@ -221,13 +221,13 @@ export default function NewsFeed() {
     }
   };
 
-  const extractArticleStructure = (processData: any) => {
+  const extractArticleStructure = (processData: Record<string, unknown>) => {
     console.log('Extracting article structure from:', processData);
     
     // Check for the new structure with journalistic_article
-    if (processData?.journalistic_article) {
+    if (processData?.journalistic_article && typeof processData.journalistic_article === 'string') {
       console.log('Found journalistic_article field');
-      const journalisticText = processData.journalistic_article;
+      const journalisticText = processData.journalistic_article as string;
       
       console.log('Raw journalistic text:', journalisticText.substring(0, 300) + '...');
       
@@ -246,7 +246,7 @@ export default function NewsFeed() {
       console.log('Cleaned text (first 300 chars):', cleanedText.substring(0, 300) + '...');
       
       return {
-        type: 'journalistic_article',
+        type: 'journalistic_article' as const,
         content: {
           headline: 'כותרת הכתבה',
           content: cleanedText
@@ -255,28 +255,31 @@ export default function NewsFeed() {
     }
     
     // Check if it's nested in analysis
-    if (processData?.analysis?.journalistic_article) {
-      console.log('Found journalistic_article in nested analysis');
-      return {
-        type: 'journalistic_article',
-        content: processData.analysis.journalistic_article
-      };
-    }
-    
-    // Check if it's the old format with article_structure
-    if (processData?.analysis?.article_structure) {
-      console.log('Found old format with article_structure');
-      return {
-        type: 'article_structure',
-        content: processData.analysis.article_structure
-      };
+    if (processData?.analysis && typeof processData.analysis === 'object' && processData.analysis !== null) {
+      const analysis = processData.analysis as Record<string, unknown>;
+      if (analysis.journalistic_article) {
+        console.log('Found journalistic_article in nested analysis');
+        return {
+          type: 'journalistic_article' as const,
+          content: analysis.journalistic_article
+        };
+      }
+      
+      if (analysis.article_structure) {
+        console.log('Found old format with article_structure');
+        return {
+          type: 'article_structure' as const,
+          content: analysis.article_structure
+        };
+      }
     }
     
     console.log('No article structure found');
     return null;
+
   };
 
-  const formatArticleStructure = (structure: any) => {
+  const formatArticleStructure = (structure: Record<string, unknown>) => {
     if (!structure) return 'לא זמין מבנה כתבה';
     
     // Combine all content into one flowing text without subheadings
@@ -430,18 +433,19 @@ export default function NewsFeed() {
                     if (structure.type === 'journalistic_article') {
                       // Display the new journalistic_article format
                       console.log('Rendering journalistic_article structure');
-                      console.log('Headline:', structure.content.headline);
-                      console.log('Content preview:', structure.content.content ? structure.content.content.substring(0, 200) + '...' : 'no content');
+                      const content = structure.content as { headline?: string; content?: string; text?: string };
+                      console.log('Headline:', content.headline);
+                      console.log('Content preview:', content.content ? content.content.substring(0, 200) + '...' : 'no content');
                       
                       return (
                         <div className="space-y-4">
                           <div className="text-2xl font-bold text-gray-900 mb-4">
-                            {structure.content.headline || 'כותרת הכתבה'}
+                            {content.headline || 'כותרת הכתבה'}
                           </div>
                           <div 
                             className="text-lg leading-relaxed"
                             dangerouslySetInnerHTML={{
-                              __html: formatTextWithLineBreaks(structure.content.content || structure.content.text || 'תוכן הכתבה')
+                              __html: formatTextWithLineBreaks(content.content || content.text || 'תוכן הכתבה')
                             }}
                           />
                         </div>
@@ -451,12 +455,13 @@ export default function NewsFeed() {
                       console.log('Rendering article_structure format');
                       
                       // Combine all content into one flowing text without subheadings
+                      const content = structure.content as { headline?: string; opening?: string; facts?: string; interpretation?: string; context?: string };
                       const allContent = [
-                        structure.content.headline,
-                        structure.content.opening,
-                        structure.content.facts,
-                        structure.content.interpretation,
-                        structure.content.context
+                        content.headline,
+                        content.opening,
+                        content.facts,
+                        content.interpretation,
+                        content.context
                       ].filter(Boolean).join('\n\n');
                       
                       return (

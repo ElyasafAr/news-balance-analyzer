@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import OpenAI from 'openai'
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     console.log('Starting news processing...')
     
@@ -107,7 +107,7 @@ function parseRotterDate(dateStr: string): Date {
 }
 
 // Process a single event
-async function processEvent(event: any) {
+async function processEvent(event: Record<string, unknown>) {
   try {
     // Check if event already exists
     const existingEvent = await prisma.newsEvent.findFirst({
@@ -271,7 +271,7 @@ function extractArticleContent(html: string, source: string) {
 }
 
 // Generate balanced summary using AI
-async function generateBalancedSummary(eventTitle: string, articles: any[]) {
+async function generateBalancedSummary(eventTitle: string, articles: Record<string, unknown>[]) {
   try {
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,

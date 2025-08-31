@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
@@ -227,7 +227,7 @@ IMPORTANT:
       console.log('Response length:', cleanResponse.length)
       
       // Try to fix common JSON issues
-      let fixedResponse = cleanResponse
+      const fixedResponse = cleanResponse
         .replace(/,\s*}/g, '}') // Remove trailing commas
         .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
         .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
