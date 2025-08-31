@@ -163,22 +163,32 @@ class BackendRunner:
     
     def log_status(self):
         """Log current status and statistics"""
-        stats = self.get_database_stats()
-        if stats:
-            logger.info(f"Status Update:")
-            logger.info(f"   Total articles: {stats.get('total', 0)}")
-            logger.info(f"   Unprocessed: {stats.get('unprocessed', 0)}")
-            logger.info(f"   Processed (relevant): {stats.get('processed_relevant', 0)}")
-            logger.info(f"   Processed (non-relevant): {stats.get('processed_non_relevant', 0)}")
-            logger.info(f"   Last hour activity: {stats.get('last_hour', 0)}")
+        logger.info("📊 Status Update:")
+        logger.info("=" * 50)
+        
+        # Try to get database stats
+        try:
+            stats = self.get_database_stats()
+            if stats:
+                logger.info(f"🗄️ Database Statistics:")
+                logger.info(f"   📈 Total articles: {stats.get('total', 0)}")
+                logger.info(f"   ⏳ Unprocessed: {stats.get('unprocessed', 0)}")
+                logger.info(f"   ✅ Processed (relevant): {stats.get('processed_relevant', 0)}")
+                logger.info(f"   ❌ Processed (non-relevant): {stats.get('processed_non_relevant', 0)}")
+                logger.info(f"   🕐 Last hour activity: {stats.get('last_hour', 0)}")
+            else:
+                logger.warning("⚠️ Could not get database stats - database might not be accessible")
+        except Exception as e:
+            logger.error(f"💥 Error getting database stats: {e}")
         
         # Calculate next run times
         next_scraper = self.last_scraper_run + self.scraper_interval - time.time()
         next_processor = self.last_processor_run + self.processor_interval - time.time()
         
-        logger.info(f"Next runs:")
-        logger.info(f"   Scraper: in {next_scraper:.0f} seconds")
-        logger.info(f"   Processor: in {next_processor:.0f} seconds")
+        logger.info(f"⏰ Next runs:")
+        logger.info(f"   🕷️ Scraper: in {next_scraper:.0f} seconds")
+        logger.info(f"   🧠 Processor: in {next_processor:.0f} seconds")
+        logger.info("=" * 50)
     
     def run(self):
         """Main loop - run continuously"""
