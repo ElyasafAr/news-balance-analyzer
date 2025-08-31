@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 
 export async function GET(request: Request) {
   try {
+    // Only import prisma during runtime, not build time
+    const { prisma } = await import('@/lib/db');
+    
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '20');
