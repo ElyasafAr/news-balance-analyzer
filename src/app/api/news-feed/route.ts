@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import path from 'path';
+import { prisma } from '@/lib/db';
 
 export async function GET(request: Request) {
   try {
@@ -10,27 +8,24 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = (page - 1) * limit;
 
-    // Open SQLite database directly
-    const dbPath = path.join(process.cwd(), 'rotter_news.db');
-    const db = await open({
-      filename: dbPath,
-      driver: sqlite3.Database
+    // Use Prisma to get all processed articles (isProcessed = 1) ordered by publication date (newest first)
+    const allArticles = await prisma.newsItem.findMany({
+      where: {
+        isProcessed: 1
+      },
+      orderBy: {
+        actual_datetime: 'desc'
+      },
+      select: {
+        id: true,
+        title: true,
+        url: true,
+        clean_content: true,
+        actual_datetime: true,
+        process_data: true,
+        created_at: true
+      }
     });
-
-    // Get all processed articles (isProcessed = 1) ordered by publication date (newest first)
-    const allArticles = await db.all(`
-      SELECT 
-        id,
-        title,
-        url,
-        clean_content,
-        actual_datetime,
-        process_data,
-        created_at
-      FROM news_items 
-      WHERE isProcessed = 1 
-      ORDER BY actual_datetime DESC
-    `);
 
     console.log(`Found ${allArticles.length} articles with isProcessed = 1`);
     
@@ -41,8 +36,6 @@ export async function GET(request: Request) {
       console.log(`First article process_data length: ${firstArticle.process_data ? firstArticle.process_data.length : 0}`);
       console.log(`First article process_data preview: ${firstArticle.process_data ? firstArticle.process_data.substring(0, 200) + '...' : 'null'}`);
     }
-
-    await db.close();
 
     // Filter relevant articles on the client side
     const relevantArticles = allArticles.filter(article => {
