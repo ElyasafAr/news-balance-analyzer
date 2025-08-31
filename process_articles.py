@@ -475,8 +475,8 @@ class ArticleProcessor:
 
 def main():
     """Main function - runs silently and processes all articles automatically"""
-    print("🔍 Article Processor for News Balance Analyzer (4-Stage Pipeline)")
-    print("🚀 Running in SILENT MODE - Processing ALL articles automatically")
+    print("Article Processor for News Balance Analyzer (4-Stage Pipeline)")
+    print("Running in SILENT MODE - Processing ALL articles automatically")
     print("=" * 70)
     
     # Initialize processor

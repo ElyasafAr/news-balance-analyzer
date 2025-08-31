@@ -127,7 +127,7 @@ class LiveRotterScraper:
             print(f"   Latest article added: {latest_timestamp}")
             
             if recent_count > 0:
-                print(f"   ⚡ Will skip existing articles for faster processing")
+                print(f"   Will skip existing articles for faster processing")
             
             return recent_count
             
@@ -174,11 +174,11 @@ class LiveRotterScraper:
             
             conn.commit()
             conn.close()
-            print(f"    💾 Article saved to database with hash: {hash_id[:8]}...")
+            print(f"    Article saved to database with hash: {hash_id[:8]}...")
             return True
             
         except Exception as e:
-            print(f"    ❌ Error saving article to database: {e}")
+            print(f"    Error saving article to database: {e}")
             return False
     
     def get_database_stats(self):
@@ -282,7 +282,7 @@ class LiveRotterScraper:
     
     def get_live_forum_page(self):
         """Get the live forum page and extract recent news from last 5 hours"""
-        print("🌐 Fetching live forum page from Rotter.net...")
+        print("Fetching live forum page from Rotter.net...")
         
         try:
             response = requests.get(self.forum_url, headers=self.headers, timeout=10)
@@ -321,7 +321,7 @@ class LiveRotterScraper:
                         extracted_datetime = self.extract_actual_datetime_from_row(row)
                         
                         if extracted_datetime:
-                            print(f"  📅 Found date/time: {extracted_datetime}")
+                            print(f"  Found date/time: {extracted_datetime}")
                             
                             # Check if this is within last 5 hours (focused filtering)
                             if self.is_within_24_hours(extracted_datetime):
@@ -369,7 +369,7 @@ class LiveRotterScraper:
                 year = '20' + str(year)
                 try:
                     dt = datetime(int(year), int(month), int(day), int(hour), int(minute))
-                    print(f"    ✅ Found datetime: {day}.{month}.{year} {hour}:{minute}")
+                    print(f"    Found datetime: {day}.{month}.{year} {hour}:{minute}")
                     return dt
                 except ValueError as e:
                     print(f"    ❌ Invalid datetime: {e}")
@@ -685,7 +685,7 @@ class LiveRotterScraper:
     
     def scrape_live_news(self):
         """Main function - scrapes live news from Rotter.net"""
-        print("🚀 Starting LIVE Rotter.net news scraper...")
+        print("Starting LIVE Rotter.net news scraper...")
         print("Fetching fresh news from the real website in real-time...")
         print("=" * 60)
         

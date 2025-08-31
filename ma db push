@@ -1,0 +1,10 @@
+[33me1d417c[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m תיקון: start command - npm start במקום python backend_runner.py
+[33m31ddb82[m תיקון: nixpacks build phase - prisma generate במקום python backend_runner.py
+[33mbe96694[m הוספת לוגים מפורטים ו-endpoint לבדיקת מסד הנתונים
+[33m4d1be8c[m תיקון: העברת serverExternalPackages לרמה העליונה
+[33m8f798e9[m שינוי intervals ל-1 דקה בין runs
+[33ma8f1e27[m תיקון: החלפת SQLite ל-PostgreSQL ב-schema
+[33mbadc148[m תיקון: החלפת serverComponentsExternalPackages עם serverExternalPackages
+[33me60ec15[m ניסיון נוסף: יצירת סקריפט start:all עם HOSTNAME ו-PORT מפורשים
+[33m01c4a72[m תיקון קריטי: Next.js עכשיו מקשיב על 0.0.0.0 במקום localhost בלבד
+[33m0c1c81a[m הוספת HOSTNAME ו-health check endpoint לפתרון בעיית routing
