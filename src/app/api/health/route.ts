@@ -1,35 +1,21 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
 
 export async function GET() {
-  let dbStatus = 'unknown';
-  let dbError = null;
-  
-  try {
-    // Test database connection
-    await prisma.$queryRaw`SELECT 1`;
-    dbStatus = 'connected';
-  } catch (error) {
-    dbStatus = 'error';
-    dbError = error instanceof Error ? error.message : 'Unknown database error';
-  }
-
   return NextResponse.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
     environment: process.env.NODE_ENV,
     port: process.env.PORT,
-    railway: process.env.RAILWAY_LOG_LEVEL,
-    database: {
-      status: dbStatus,
-      error: dbError
-    }
+    railway: process.env.RAILWAY_LOG_LEVEL
   });
 }
 
 export async function POST() {
   try {
+    // Only import prisma during runtime, not build time
+    const { prisma } = await import('@/lib/db');
+    
     // Initialize database tables
     await prisma.$executeRaw`
       CREATE TABLE IF NOT EXISTS news_items (
