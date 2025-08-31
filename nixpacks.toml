@@ -8,7 +8,7 @@ cmds = ["npm install"]
 cmds = ["npx prisma generate"]
 
 [start]
-cmd = "python backend_runner.py"
+cmd = "npm start"
 
 [variables]
 HOSTNAME = "0.0.0.0"
