@@ -8,19 +8,17 @@ export async function GET() {
     
     // Get database statistics
     const newsItemsCount = await prisma.newsItem.count();
-    const newsEventsCount = await prisma.newsEvent.count();
-    const newsArticlesCount = await prisma.newsArticle.count();
-    const balancedSummariesCount = await prisma.balancedSummary.count();
+    const newsHashesCount = await prisma.newsHash.count();
     
     // Get recent articles
     const recentArticles = await prisma.newsItem.findMany({
       take: 5,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { created_at: 'desc' },
       select: {
         id: true,
         title: true,
         url: true,
-        createdAt: true,
+        created_at: true,
         isProcessed: true,
         content_length: true
       }
@@ -46,9 +44,7 @@ export async function GET() {
         connection: 'Connected',
         tables: {
           newsItems: newsItemsCount,
-          newsEvents: newsEventsCount,
-          newsArticles: newsArticlesCount,
-          balancedSummaries: balancedSummariesCount
+          newsHashes: newsHashesCount
         },
         processing: {
           total: newsItemsCount,
