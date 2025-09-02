@@ -3,14 +3,14 @@ builder = "NIXPACKS"
 watchPatterns = ["**/*"]
 
 [deploy]
-startCommand = "npm run railway:start"
-healthcheckPath = "/api/health"
+startCommand = "python backend_runner.py"
+healthcheckPath = "/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 port = 8080
 
 [env]
-NODE_ENV = "production"
+PYTHON_ENV = "production"
 RAILWAY_LOG_LEVEL = "debug"
 PORT = "8080"
 HOSTNAME = "0.0.0.0"

@@ -10,14 +10,25 @@ import re
 import requests
 from bs4 import BeautifulSoup
 import time
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import hashlib
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+# Try to load from .env.local for local development, but Railway will provide env vars directly
+if os.path.exists('.env.local'):
+    load_dotenv('.env.local')
+    print("Loaded environment variables from .env.local (local development)")
+else:
+    print("Using environment variables from Railway (production)")
 
 class LiveRotterScraper:
     def __init__(self):
         self.base_url = "https://rotter.net"
         self.forum_url = "https://rotter.net/forum/listforum.php"
-        self.db_path = "rotter_news.db"
+        self.db_url = os.getenv('DATABASE_URL')
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -36,16 +47,27 @@ class LiveRotterScraper:
         # Initialize database
         self.init_database()
     
-    def init_database(self):
-        """Initialize the SQLite database and create tables if they don't exist."""
+    def get_db_connection(self):
+        """Get a database connection"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            return psycopg2.connect(self.db_url)
+        except Exception as e:
+            print(f"Error connecting to database: {e}")
+            return None
+    
+    def init_database(self):
+        """Initialize the PostgreSQL database and create tables if they don't exist."""
+        try:
+            conn = self.get_db_connection()
+            if not conn:
+                return
+                
             cursor = conn.cursor()
             
             # Create news_items table
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS news_items (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    id SERIAL PRIMARY KEY,
                     title TEXT NOT NULL,
                     url TEXT NOT NULL UNIQUE,
                     scraped_at TEXT NOT NULL,
@@ -56,7 +78,7 @@ class LiveRotterScraper:
                     content_length INTEGER,
                     date_time TEXT,
                     hash_id TEXT UNIQUE,
-                    isProcessed BOOLEAN DEFAULT 0,
+                    isProcessed INTEGER DEFAULT 0,
                     process_data TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
@@ -72,7 +94,7 @@ class LiveRotterScraper:
             
             conn.commit()
             conn.close()
-            print(f"Database initialized at {self.db_path}")
+            print(f"Database initialized successfully")
         except Exception as e:
             print(f"Error initializing database: {e}")
     
@@ -84,9 +106,12 @@ class LiveRotterScraper:
     def is_article_exists(self, hash_id):
         """Check if an article already exists in the database"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self.get_db_connection()
+            if not conn:
+                return False
+                
             cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) FROM news_items WHERE hash_id = ?", (hash_id,))
+            cursor.execute("SELECT COUNT(*) FROM news_items WHERE hash_id = %s", (hash_id,))
             count = cursor.fetchone()[0]
             conn.close()
             return count > 0
@@ -97,13 +122,16 @@ class LiveRotterScraper:
     def show_database_summary(self):
         """Show a summary of what's already in the database before scraping"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self.get_db_connection()
+            if not conn:
+                return
+                
             cursor = conn.cursor()
             
             # Get recent articles count
             cursor.execute("""
                 SELECT COUNT(*) FROM news_items 
-                WHERE datetime(created_at) >= datetime('now', '-1 day')
+                WHERE created_at >= NOW() - INTERVAL '1 day'
             """)
             recent_count = cursor.fetchone()[0]
             
@@ -121,7 +149,7 @@ class LiveRotterScraper:
             
             conn.close()
             
-            print(f"🗄️  Database Summary:")
+            print(f"Database Summary:")
             print(f"   Total articles stored: {total_count}")
             print(f"   Articles from last 24 hours: {recent_count}")
             print(f"   Latest article added: {latest_timestamp}")
@@ -138,7 +166,10 @@ class LiveRotterScraper:
     def save_article_to_db(self, article_data):
         """Save an article to the database"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self.get_db_connection()
+            if not conn:
+                return False
+                
             cursor = conn.cursor()
             
             # Generate hash for this article
@@ -146,7 +177,7 @@ class LiveRotterScraper:
             
             # Check if article already exists
             if self.is_article_exists(hash_id):
-                print(f"    ⚠️  Article already exists in database (skipping)")
+                print(f"    [WARNING]  Article already exists in database (skipping)")
                 conn.close()
                 return False
             
@@ -156,7 +187,7 @@ class LiveRotterScraper:
                     title, url, scraped_at, row_text, actual_datetime, 
                     content, clean_content, content_length, date_time, hash_id,
                     isProcessed, process_data
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ''', (
                 article_data['title'],
                 article_data['url'],
@@ -184,7 +215,10 @@ class LiveRotterScraper:
     def get_database_stats(self):
         """Get statistics from the database"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self.get_db_connection()
+            if not conn:
+                return {'total': 0, 'last_24h': 0, 'last_hour': 0}
+                
             cursor = conn.cursor()
             
             # Get total count
@@ -194,14 +228,14 @@ class LiveRotterScraper:
             # Get count from last 24 hours
             cursor.execute("""
                 SELECT COUNT(*) FROM news_items 
-                WHERE datetime(created_at) >= datetime('now', '-1 day')
+                WHERE created_at >= NOW() - INTERVAL '1 day'
             """)
             last_24h_count = cursor.fetchone()[0]
             
             # Get count from last hour
             cursor.execute("""
                 SELECT COUNT(*) FROM news_items 
-                WHERE datetime(created_at) >= datetime('now', '-1 hour')
+                WHERE created_at >= NOW() - INTERVAL '1 hour'
             """)
             last_hour_count = cursor.fetchone()[0]
             
@@ -220,17 +254,20 @@ class LiveRotterScraper:
     def export_recent_articles_from_db(self, hours=5, limit=100):
         """Export recent articles from database to JSON format"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self.get_db_connection()
+            if not conn:
+                return []
+                
             cursor = conn.cursor()
             
             # Get recent articles from the last N hours
             cursor.execute("""
                 SELECT id, title, url, actual_datetime, clean_content, content_length, date_time, created_at
                 FROM news_items 
-                WHERE datetime(actual_datetime) >= datetime('now', '-{} hours')
+                WHERE actual_datetime >= NOW() - INTERVAL '{} hours'
                 ORDER BY actual_datetime DESC
-                LIMIT ?
-            """.format(hours, limit))
+                LIMIT %s
+            """.format(hours), (limit,))
             
             rows = cursor.fetchall()
             conn.close()
@@ -248,7 +285,7 @@ class LiveRotterScraper:
                     'created_at': row[7]
                 })
             
-            print(f"📤 Exported {len(articles)} articles from database (last {hours} hours)")
+            print(f"Exported {len(articles)} articles from database (last {hours} hours)")
             return articles
             
         except Exception as e:
@@ -258,11 +295,14 @@ class LiveRotterScraper:
     def check_article_exists_in_db(self, title, url):
         """Quick check if article already exists in database (faster than full hash check)"""
         try:
-            conn = sqlite3.connect(self.db_path)
+            conn = self.get_db_connection()
+            if not conn:
+                return False
+                
             cursor = conn.cursor()
             
             # Check by URL first (most reliable)
-            cursor.execute("SELECT COUNT(*) FROM news_items WHERE url = ?", (url,))
+            cursor.execute("SELECT COUNT(*) FROM news_items WHERE url = %s", (url,))
             url_count = cursor.fetchone()[0]
             
             if url_count > 0:
@@ -270,7 +310,7 @@ class LiveRotterScraper:
                 return True
             
             # Also check by title similarity (for cases where URL might be slightly different)
-            cursor.execute("SELECT COUNT(*) FROM news_items WHERE title = ?", (title,))
+            cursor.execute("SELECT COUNT(*) FROM news_items WHERE title = %s", (title,))
             title_count = cursor.fetchone()[0]
             
             conn.close()
@@ -342,13 +382,13 @@ class LiveRotterScraper:
                             else:
                                 print(f"  ✗ Skipped (too old): {title[:60]}... - Date: {extracted_datetime}")
                         else:
-                            print(f"  ⚠️  No date/time found for: {title[:60]}...")
+                            print(f"  [WARNING]  No date/time found for: {title[:60]}...")
                 
                 # Break outer loop if we reached the limit
                 # if len(recent_news_items) >= 50:
                 #     break
             
-            print(f"📊 Processed {processed_count} articles, found {len(recent_news_items)} recent ones")
+            print(f"[STATS] Processed {processed_count} articles, found {len(recent_news_items)} recent ones")
             print(f"Live scraping complete: Found {len(recent_news_items)} recent news items from last 24 hours")
             return recent_news_items
             
@@ -372,7 +412,7 @@ class LiveRotterScraper:
                     print(f"    Found datetime: {day}.{month}.{year} {hour}:{minute}")
                     return dt
                 except ValueError as e:
-                    print(f"    ❌ Invalid datetime: {e}")
+                    print(f"    [ERROR] Invalid datetime: {e}")
             
             # Look for separate date and time patterns
             date_pattern = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{2})', row_text)
@@ -384,10 +424,10 @@ class LiveRotterScraper:
                 year = '20' + str(year)
                 try:
                     dt = datetime(int(year), int(month), int(day), int(hour), int(minute))
-                    print(f"    ✅ Found separate date/time: {day}.{month}.{year} {hour}:{minute}")
+                    print(f"    [OK] Found separate date/time: {day}.{month}.{year} {hour}:{minute}")
                     return dt
                 except ValueError as e:
-                    print(f"    ❌ Invalid datetime: {e}")
+                    print(f"    [ERROR] Invalid datetime: {e}")
             
             # If only date found, use current time
             elif date_pattern:
@@ -396,10 +436,10 @@ class LiveRotterScraper:
                 now = datetime.now()
                 try:
                     dt = datetime(int(year), int(month), int(day), now.hour, now.minute)
-                    print(f"    ✅ Found date only: {day}.{month}.{year} (using current time)")
+                    print(f"    [OK] Found date only: {day}.{month}.{year} (using current time)")
                     return dt
                 except ValueError as e:
-                    print(f"    ❌ Invalid date: {e}")
+                    print(f"    [ERROR] Invalid date: {e}")
             
             # If only time found, use today's date
             elif time_pattern:
@@ -407,12 +447,12 @@ class LiveRotterScraper:
                 today = datetime.now()
                 try:
                     dt = datetime(today.year, today.month, today.day, int(hour), int(minute))
-                    print(f"    ✅ Found time only: {hour}:{minute} (using today)")
+                    print(f"    [OK] Found time only: {hour}:{minute} (using today)")
                     return dt
                 except ValueError as e:
-                    print(f"    ❌ Invalid time: {e}")
+                    print(f"    [ERROR] Invalid time: {e}")
             
-            print(f"    ❌ No datetime found in row")
+            print(f"    [ERROR] No datetime found in row")
             return None
             
         except Exception as e:
@@ -575,7 +615,7 @@ class LiveRotterScraper:
                     print(f"    📅 Found datetime in article page: {day}.{month}.{year} {hour}:{minute}")
                     return dt
                 except ValueError as e:
-                    print(f"    ❌ Invalid datetime from article page: {e}")
+                    print(f"    [ERROR] Invalid datetime from article page: {e}")
             
             # Look for just date pattern
             date_pattern = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{2})', page_text)
@@ -587,7 +627,7 @@ class LiveRotterScraper:
                     print(f"    📅 Found date only in article page: {day}.{month}.{year}")
                     return dt
                 except ValueError as e:
-                    print(f"    ❌ Invalid date from article page: {e}")
+                    print(f"    [ERROR] Invalid date from article page: {e}")
             
             # Look for time pattern
             time_pattern = re.search(r'(\d{1,2}):(\d{2})', page_text)
@@ -599,13 +639,13 @@ class LiveRotterScraper:
                     print(f"    📅 Found time only in article page: {hour}:{minute} (using today)")
                     return dt
                 except ValueError as e:
-                    print(f"    ❌ Invalid time from article page: {e}")
+                    print(f"    [ERROR] Invalid time from article page: {e}")
             
-            print(f"    ⚠️  No datetime found in article page")
+            print(f"    [WARNING]  No datetime found in article page")
             return None
             
         except Exception as e:
-            print(f"    ❌ Error extracting datetime from article page: {e}")
+            print(f"    [ERROR] Error extracting datetime from article page: {e}")
             return None
     
     def clean_article_content(self, content):
@@ -696,11 +736,11 @@ class LiveRotterScraper:
             print("No recent news items found in live scraping")
             return []
         
-        print(f"\n📰 Found {len(recent_news_items)} recent news items from live website!")
+        print(f"\n[NEWS] Found {len(recent_news_items)} recent news items from live website!")
         print("=" * 60)
         
         # Step 2: Get full content for the filtered items
-        print(f"\n📰 Getting full content for {len(recent_news_items)} recent items...")
+        print(f"\n[NEWS] Getting full content for {len(recent_news_items)} recent items...")
         print("=" * 60)
         
         events_with_content = []
@@ -714,7 +754,7 @@ class LiveRotterScraper:
             
             # Check if article already exists in database
             if self.check_article_exists_in_db(item['title'], item['url']):
-                print(f"  ⚠️  Article already exists in database (skipping): {item['title'][:50]}")
+                print(f"  [WARNING]  Article already exists in database (skipping): {item['title'][:50]}")
                 skipped_count += 1
                 continue
 
@@ -750,7 +790,7 @@ class LiveRotterScraper:
                     item['date_time'] = 'Unknown'
                     item['actual_datetime'] = 'Unknown'
                     print(f"  ✓ Content extracted and cleaned - Length: {len(cleaned_content)} characters")
-                    print(f"  ⚠️  No datetime found for this article")
+                    print(f"  [WARNING]  No datetime found for this article")
                 
                 # Save to database
                 self.save_article_to_db(item)
@@ -764,10 +804,10 @@ class LiveRotterScraper:
             time.sleep(0.3)  # Reduced delay for faster processing
         
         print(f"\n🎉 Live scraping complete!")
-        print(f"📊 Processing Summary:")
+        print(f"[STATS] Processing Summary:")
         print(f"   ✓ New articles processed: {processed_count}")
-        print(f"   ⚠️  Articles skipped (already exist): {skipped_count}")
-        print(f"   📰 Total recent events from last 5 hours: {len(events_with_content)}")
+        print(f"   [WARNING]  Articles skipped (already exist): {skipped_count}")
+        print(f"   [NEWS] Total recent events from last 5 hours: {len(events_with_content)}")
         
         # Sort articles by datetime (newest to oldest)
         print(f"\n🔄 Sorting articles by datetime (newest to oldest)...")
@@ -816,7 +856,7 @@ def main():
     events = scraper.scrape_live_news()
     
     if events:
-        print(f"\n📊 Live scraping results - {len(events)} recent events (sorted by datetime, newest first):")
+        print(f"\n[STATS] Live scraping results - {len(events)} recent events (sorted by datetime, newest first):")
         for i, event in enumerate(events, 1):
             print(f"\n{i}. {event['title']}")
             print(f"   URL: {event['url']}")
@@ -826,7 +866,7 @@ def main():
         
         # Get database statistics
         stats = scraper.get_database_stats()
-        print(f"\n🗄️  Database Statistics:")
+        print(f"\n[DATABASE]  Database Statistics:")
         print(f"   Total articles: {stats['total']}")
         print(f"   Last 24 hours: {stats['last_24h']}")
         print(f"   Last hour: {stats['last_hour']}")
@@ -835,24 +875,24 @@ def main():
         scraper.export_recent_articles_from_db(hours=24, limit=100)
 
         # Save ALL articles from last 24 hours
-        print(f"\n📝 Saving ALL {len(events)} articles from the last 24 hours")
+        print(f"\n[WRITE] Saving ALL {len(events)} articles from the last 24 hours")
         
         # Save to JSON
         scraper.save_to_json(events)
-        print(f"\n✅ All {len(events)} live recent news events have been saved to recent_news_only.json")
+        print(f"\n[OK] All {len(events)} live recent news events have been saved to recent_news_only.json")
         print(f"🌐 You can now view these in your web interface at http://localhost:8080/news_scroller.html")
         print(f"💾 Articles are also stored in SQLite database: {scraper.db_path}")
         
         # Show final summary
         print(f"\n🎯 Final Summary:")
-        print(f"   🚀 Scraping completed successfully!")
-        print(f"   📰 New articles added to database: {len(events)}")
+        print(f"   [START] Scraping completed successfully!")
+        print(f"   [NEWS] New articles added to database: {len(events)}")
         print(f"   💾 Total articles in database: {stats['total']}")
         print(f"   ⚡ Next run will be faster (will skip existing articles)")
         print(f"   📅 Articles filtered from last 24 hours")
         
     else:
-        print("❌ No live recent events were found from the website.")
+        print("[ERROR] No live recent events were found from the website.")
         print("💡 This could mean:")
         print("   - All recent articles are already in the database")
         print("   - No new articles were published in the last 5 hours")

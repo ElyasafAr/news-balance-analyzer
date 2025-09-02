@@ -16,8 +16,18 @@ import signal
 import sys
 import os
 from datetime import datetime
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import json
+from dotenv import load_dotenv
+
+# Load environment variables
+# Try to load from .env.local for local development, but Railway will provide env vars directly
+if os.path.exists('.env.local'):
+    load_dotenv('.env.local')
+    print("Loaded environment variables from .env.local (local development)")
+else:
+    print("Using environment variables from Railway (production)")
 
 # Configure logging
 logging.basicConfig(
@@ -38,7 +48,7 @@ class BackendRunner:
         self.processor_interval = 60  # 1 minute between processing runs
         self.last_scraper_run = 0
         self.last_processor_run = 0
-        self.db_path = "rotter_news.db"
+        self.db_url = os.getenv('DATABASE_URL')
         
         # Setup signal handlers for graceful shutdown
         try:
@@ -55,6 +65,14 @@ class BackendRunner:
         """Handle shutdown signals gracefully"""
         logger.info(f"Received signal {signum}, shutting down gracefully...")
         self.running = False
+    
+    def get_db_connection(self):
+        """Get a database connection"""
+        try:
+            return psycopg2.connect(self.db_url)
+        except Exception as e:
+            logger.error(f"Error connecting to database: {e}")
+            return None
     
     def run_script(self, script_name: str, description: str) -> bool:
         """Run a Python script and return success status"""
@@ -100,8 +118,11 @@ class BackendRunner:
     def get_database_stats(self) -> dict:
         """Get current database statistics"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
+            conn = self.get_db_connection()
+            if conn is None:
+                return {}
+                
+            cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
             
             # Get counts for all statuses
             cursor.execute("SELECT COUNT(*) FROM news_items WHERE isProcessed = 0")
@@ -119,7 +140,7 @@ class BackendRunner:
             # Get recent activity
             cursor.execute("""
                 SELECT COUNT(*) FROM news_items 
-                WHERE datetime(created_at) >= datetime('now', '-1 hour')
+                WHERE created_at >= NOW() - INTERVAL '1 hour'
             """)
             last_hour_count = cursor.fetchone()[0]
             
@@ -134,7 +155,7 @@ class BackendRunner:
             }
             
         except Exception as e:
-            logger.error(f"❌ Error getting database stats: {e}")
+            logger.error(f"[ERROR] Error getting database stats: {e}")
             return {}
     
     def should_run_scraper(self) -> bool:
@@ -163,31 +184,31 @@ class BackendRunner:
     
     def log_status(self):
         """Log current status and statistics"""
-        logger.info("📊 Status Update:")
+        logger.info("[STATS] Status Update:")
         logger.info("=" * 50)
         
         # Try to get database stats
         try:
             stats = self.get_database_stats()
             if stats:
-                logger.info(f"🗄️ Database Statistics:")
-                logger.info(f"   📈 Total articles: {stats.get('total', 0)}")
-                logger.info(f"   ⏳ Unprocessed: {stats.get('unprocessed', 0)}")
-                logger.info(f"   ✅ Processed (relevant): {stats.get('processed_relevant', 0)}")
-                logger.info(f"   ❌ Processed (non-relevant): {stats.get('processed_non_relevant', 0)}")
-                logger.info(f"   🕐 Last hour activity: {stats.get('last_hour', 0)}")
+                logger.info(f"[DATABASE] Database Statistics:")
+                logger.info(f"   [PROGRESS] Total articles: {stats.get('total', 0)}")
+                logger.info(f"   [WAIT] Unprocessed: {stats.get('unprocessed', 0)}")
+                logger.info(f"   [OK] Processed (relevant): {stats.get('processed_relevant', 0)}")
+                logger.info(f"   [ERROR] Processed (non-relevant): {stats.get('processed_non_relevant', 0)}")
+                logger.info(f"   [TIME] Last hour activity: {stats.get('last_hour', 0)}")
             else:
-                logger.warning("⚠️ Could not get database stats - database might not be accessible")
+                logger.warning("[WARNING] Could not get database stats - database might not be accessible")
         except Exception as e:
-            logger.error(f"💥 Error getting database stats: {e}")
+            logger.error(f"[CRASH] Error getting database stats: {e}")
         
         # Calculate next run times
         next_scraper = self.last_scraper_run + self.scraper_interval - time.time()
         next_processor = self.last_processor_run + self.processor_interval - time.time()
         
         logger.info(f"⏰ Next runs:")
-        logger.info(f"   🕷️ Scraper: in {next_scraper:.0f} seconds")
-        logger.info(f"   🧠 Processor: in {next_processor:.0f} seconds")
+        logger.info(f"   [SPIDER] Scraper: in {next_scraper:.0f} seconds")
+        logger.info(f"   [AI] Processor: in {next_processor:.0f} seconds")
         logger.info("=" * 50)
     
     def run(self):
