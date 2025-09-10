@@ -29,20 +29,27 @@ class LiveRotterScraper:
         self.base_url = "https://rotter.net"
         self.forum_url = "https://rotter.net/forum/listforum.php"
         self.db_url = os.getenv('DATABASE_URL')
+        # Create a session for better connection handling
+        self.session = requests.Session()
+        
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'Accept-Language': 'he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7',
             'Accept-Encoding': 'gzip, deflate, br',
-            'DNT': '1',
             'Connection': 'keep-alive',
             'Upgrade-Insecure-Requests': '1',
             'Sec-Fetch-Dest': 'document',
             'Sec-Fetch-Mode': 'navigate',
             'Sec-Fetch-Site': 'none',
             'Sec-Fetch-User': '?1',
-            'Cache-Control': 'max-age=0'
+            'Cache-Control': 'max-age=0',
+            'Referer': 'https://rotter.net/',
+            'Origin': 'https://rotter.net'
         }
+        
+        # Set headers for the session
+        self.session.headers.update(self.headers)
         
         # Initialize database
         self.init_database()
@@ -325,7 +332,17 @@ class LiveRotterScraper:
         print("Fetching live forum page from Rotter.net...")
         
         try:
-            response = requests.get(self.forum_url, headers=self.headers, timeout=10)
+            # First, try to access the main page to get cookies
+            print("  Accessing main page first...")
+            main_response = self.session.get(self.base_url, timeout=10)
+            print(f"  Main page status: {main_response.status_code}")
+            
+            # Add delay between requests
+            time.sleep(2)
+            
+            # Now try the forum page
+            print("  Accessing forum page...")
+            response = self.session.get(self.forum_url, timeout=10)
             response.raise_for_status()
             response.encoding = 'windows-1255'
             

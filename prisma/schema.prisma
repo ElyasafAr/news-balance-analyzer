@@ -20,7 +20,7 @@ model NewsItem {
   date_time       String?
   hash_id         String?
   created_at      DateTime @default(now())
-  isProcessed     Int      @default(0)
+  isprocessed     Int      @default(0)
   process_data    String?
 
   @@map("news_items")

@@ -10,10 +10,10 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const offset = (page - 1) * limit;
 
-    // Use Prisma to get all processed articles (isProcessed = 1) ordered by publication date (newest first)
+    // Use Prisma to get all processed articles (isprocessed = 1) ordered by publication date (newest first)
     const allArticles = await prisma.newsItem.findMany({
       where: {
-        isProcessed: 1
+        isprocessed: 1
       },
       orderBy: {
         actual_datetime: 'desc'
