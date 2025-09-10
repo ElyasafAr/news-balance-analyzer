@@ -3,8 +3,8 @@ builder = "NIXPACKS"
 watchPatterns = ["**/*"]
 
 [deploy]
-startCommand = "python backend_runner.py"
-healthcheckPath = "/health"
+startCommand = "npm run start:all"
+healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 port = 8080
