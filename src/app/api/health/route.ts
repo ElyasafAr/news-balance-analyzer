@@ -30,7 +30,7 @@ export async function POST() {
         content_length INTEGER,
         date_time TEXT,
         hash_id TEXT UNIQUE,
-        isProcessed BOOLEAN DEFAULT 0,
+        isprocessed BOOLEAN DEFAULT 0,
         process_data TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )

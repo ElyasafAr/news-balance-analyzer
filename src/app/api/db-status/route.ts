@@ -19,22 +19,22 @@ export async function GET() {
         title: true,
         url: true,
         created_at: true,
-        isProcessed: true,
+        isprocessed: true,
         content_length: true
       }
     });
     
     // Get processing status
     const unprocessedCount = await prisma.newsItem.count({
-      where: { isProcessed: 0 }
+      where: { isprocessed: 0 }
     });
     
     const processedRelevantCount = await prisma.newsItem.count({
-      where: { isProcessed: 1 }
+      where: { isprocessed: 1 }
     });
     
     const processedNonRelevantCount = await prisma.newsItem.count({
-      where: { isProcessed: 2 }
+      where: { isprocessed: 2 }
     });
     
     return NextResponse.json({

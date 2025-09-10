@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       }
     });
 
-    console.log(`Found ${allArticles.length} articles with isProcessed = 1`);
+    console.log(`Found ${allArticles.length} articles with isprocessed = 1`);
     
     // Log the first article's process_data length to check for truncation
     if (allArticles.length > 0) {
