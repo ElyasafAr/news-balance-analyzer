@@ -274,6 +274,18 @@ export default function NewsFeed() {
       }
     }
     
+    // Check if analysis is a string (new format)
+    if (processData?.analysis && typeof processData.analysis === 'string') {
+      console.log('Found analysis as string (new format)');
+      return {
+        type: 'journalistic_article' as const,
+        content: {
+          headline: 'ניתוח הכתבה',
+          content: processData.analysis
+        }
+      };
+    }
+    
     console.log('No article structure found');
     return null;
 
