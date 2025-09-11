@@ -13,10 +13,10 @@ export default function Home() {
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          מנתח איזון חדשות
+          חדשות מאוזנות
         </h1>
         <p className="text-lg text-gray-600">
-          ניתוח איזון חדשות וסיכומים מאוזנים ממקורות מרובים
+          הצגת חדשות בצורה מאוזנת על ידי שימוש בכלי AI
         </p>
       </div>
 
