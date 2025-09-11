@@ -1,6 +1,7 @@
 'use client'
 
 import NewsFeed from '@/components/NewsFeed'
+import SideMenu from '@/components/SideMenu'
 
 export default function Home() {
   console.log('=== HOME PAGE LOADING ===');
@@ -9,7 +10,9 @@ export default function Home() {
   console.log('Timestamp:', new Date().toISOString());
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <>
+      <SideMenu />
+      <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl font-bold text-gray-800 mb-4">
@@ -22,7 +25,8 @@ export default function Home() {
 
       {/* Content - Only News Feed */}
       <NewsFeed />
-    </div>
+      </div>
+    </>
   )
 }
 
