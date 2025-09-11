@@ -274,9 +274,9 @@ export default function NewsFeed() {
       }
     }
     
-    // Check if analysis is a string (new format)
+    // Check if analysis is a string (old new format)
     if (processData?.analysis && typeof processData.analysis === 'string') {
-      console.log('Found analysis as string (new format)');
+      console.log('Found analysis as string (old new format)');
       return {
         type: 'journalistic_article' as const,
         content: {
@@ -284,6 +284,23 @@ export default function NewsFeed() {
           content: processData.analysis
         }
       };
+    }
+    
+    // Check if analysis is an object with new structure (latest format)
+    if (processData?.analysis && typeof processData.analysis === 'object' && processData.analysis !== null) {
+      const analysis = processData.analysis as Record<string, unknown>;
+      
+      // Check for new structure with final_article
+      if (analysis.final_article && typeof analysis.final_article === 'string') {
+        console.log('Found new analysis format with final_article');
+        return {
+          type: 'journalistic_article' as const,
+          content: {
+            headline: 'כתבה מאוזנת',
+            content: analysis.final_article
+          }
+        };
+      }
     }
     
     console.log('No article structure found');
@@ -509,7 +526,7 @@ export default function NewsFeed() {
                         if (processData) {
                           return (
                             <div className="space-y-4">
-                               {/* Research Notes */}
+                               {/* Research Notes - Old format */}
                                {processData.research_notes && (
                                  <div className="bg-blue-50 p-3 rounded-lg">
                                    <h4 className="font-semibold text-blue-900 mb-2">הערות מחקר:</h4>
@@ -522,7 +539,20 @@ export default function NewsFeed() {
                                  </div>
                                )}
                                
-                               {/* Technical Analysis */}
+                               {/* Research - New format */}
+                               {processData.analysis?.research && (
+                                 <div className="bg-blue-50 p-3 rounded-lg">
+                                   <h4 className="font-semibold text-blue-900 mb-2">מחקר:</h4>
+                                   <div 
+                                     className="text-blue-800"
+                                     dangerouslySetInnerHTML={{
+                                       __html: formatTextWithLineBreaks(cleanHebrewText(processData.analysis.research))
+                                     }}
+                                   />
+                                 </div>
+                               )}
+                               
+                               {/* Technical Analysis - Old format */}
                                {processData.technical_analysis && (
                                  <div className="bg-green-50 p-3 rounded-lg">
                                    <h4 className="font-semibold text-green-900 mb-2">ניתוח טכני:</h4>
@@ -532,6 +562,36 @@ export default function NewsFeed() {
                                        __html: formatTextWithLineBreaks(cleanHebrewText(processData.technical_analysis))
                                      }}
                                    />
+                                 </div>
+                               )}
+                               
+                               {/* Technical Analysis - New format */}
+                               {processData.analysis?.technical_analysis && (
+                                 <div className="bg-green-50 p-3 rounded-lg">
+                                   <h4 className="font-semibold text-green-900 mb-2">ניתוח טכני:</h4>
+                                   <div 
+                                     className="text-green-800"
+                                     dangerouslySetInnerHTML={{
+                                       __html: formatTextWithLineBreaks(cleanHebrewText(processData.analysis.technical_analysis))
+                                     }}
+                                   />
+                                 </div>
+                               )}
+                               
+                               {/* Category and Reason - New format */}
+                               {(processData.analysis?.category || processData.analysis?.reason) && (
+                                 <div className="bg-purple-50 p-3 rounded-lg">
+                                   <h4 className="font-semibold text-purple-900 mb-2">פרטי הכתבה:</h4>
+                                   {processData.analysis.category && (
+                                     <div className="mb-2">
+                                       <strong>קטגוריה:</strong> {processData.analysis.category}
+                                     </div>
+                                   )}
+                                   {processData.analysis.reason && (
+                                     <div>
+                                       <strong>סיבה לרלוונטיות:</strong> {processData.analysis.reason}
+                                     </div>
+                                   )}
                                  </div>
                                )}
                                
